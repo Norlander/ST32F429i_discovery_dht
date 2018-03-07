@@ -6,10 +6,10 @@
  */
 
 
-#include "tim.h"
 #include "dht22.h"
 
 #include <stm32f4xx.h>
+#include <tim_old.h>
 
 static dht22_data data;
 

@@ -6,12 +6,10 @@
  */
 
 
-#include "tim.h"
-
-//#include <stm32f4xx_hal_tim.h>
-//#include <stm32f4xx_hal_rcc.h>
+#include <tim_old.h>
 #include "stm32f4xx_hal.h"
 #include "stm32f429i_discovery.h"
+#include "dht_tim.h"
 
 void
 Delay_us (uint16_t nTime)
@@ -42,13 +40,12 @@ void DTIM_Initialize ()
   volatile uint32_t hclk = HAL_RCC_GetHCLKFreq();
   volatile uint32_t sysclk = HAL_RCC_GetSysClockFreq();
 
-  TIM_HandleTypeDef htim7;
   htim7.Instance = TIM7;
-  /* 42 MHz on APB1 timer bus */
-  htim7.Init.ClockDivision = TIM_CLOCKDIVISION_DIV2;
-  /* 21 MHz at this stage. Divide it down to 1000Hz by using 21 000 --> 20 999 divider */
-  htim7.Init.Prescaler = 20999;
-  htim7.Init.Period = 1000;
+  /* 168 MHz on APB1 timer bus */
+  htim7.Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;
+  /* 42 MHz at this stage. Divide it down to 1000Hz by using 42 000 --> 41 999 divider */
+  htim7.Init.Prescaler = 41999;
+  htim7.Init.Period = 999;
   htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
 
   HAL_TIM_Base_Init(&htim7);
@@ -57,22 +54,28 @@ void DTIM_Initialize ()
   /* APB2 use for us resolution. */
   __HAL_RCC_TIM10_CLK_ENABLE();
 
-  TIM_HandleTypeDef htim10;
   htim10.Instance = TIM10;
   /* 168 MHz on APB1 timer bus */
   htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;
   /* 42 MHz at this stage. Divide it down to 1MHz by using 42 --> 41 divider */
-  htim10.Init.Prescaler = 41;
+  htim10.Init.Prescaler = 167;
   htim10.Init.Period = 0xffff;
   htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
 
   HAL_TIM_Base_Init(&htim10);
 
   BSP_LED_Init(LED3);
+  BSP_LED_Init(LED4);
 
-  NVIC_SetPriority(TIM7_IRQn, 2);
-  NVIC_EnableIRQ(TIM7_IRQn);
+  HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
+
+  HAL_NVIC_SetPriority(TIM7_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(TIM7_IRQn);
+
+  HAL_NVIC_SetPriority(TIM1_UP_TIM10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
+
   HAL_TIM_Base_Start_IT(&htim7);
-  HAL_TIM_Base_Start(&htim10);
+  HAL_TIM_Base_Start_IT(&htim10);
 
 }

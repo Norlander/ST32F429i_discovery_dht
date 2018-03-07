@@ -1,7 +1,5 @@
+#include <tim_old.h>
 #include "dht22.h"
-#include "tim.h"
-
-//#include <stm32f10x_rcc.h>
 #include "stm32f4xx_hal.h"
 
 //#include "stm32f4xx_hal_rcc.h"
@@ -37,23 +35,19 @@ DHT22_GetReadings (dht22_data *out)
   HAL_GPIO_WritePin(DHT22_GPIO_PORT, DHT22_GPIO_PIN, GPIO_PIN_SET);
 
   // Generate start impulse
-  //DHT22_GPIO_PORT->BRR = DHT22_GPIO_PIN; // Pull down SDA (Bit_RESET)
-//  DHT22_GPIO_PORT->BSRR = DHT22_GPIO_PIN;
   HAL_GPIO_WritePin(DHT22_GPIO_PORT, DHT22_GPIO_PIN, GPIO_PIN_RESET);
-  Delay_ms (4*18); // Host start signal should be 18ms. Something is wrong with TIM7. hence "4*18"
-  //DHT22_GPIO_PORT->BSRR = (1<<(3+16)); // Release SDA (Bit_SET)
+  Delay_ms (18); // Host start signal should be 18ms.
   HAL_GPIO_WritePin(DHT22_GPIO_PORT, DHT22_GPIO_PIN, GPIO_PIN_SET);
 
   // Switch pin to input with Pull-Up
   //PORT.GPIO_Mode = GPIO_Mode_IPU;
   GPIOStruct.Mode = GPIO_MODE_INPUT;
   GPIOStruct.Pull = GPIO_PULLUP;
-  //GPIO_Init (DHT22_GPIO_PORT, &PORT);
   HAL_GPIO_Init(DHT22_GPIO_PORT, &GPIOStruct);
 
   // Wait for AM2302 to begin communication (20-40us)
   DELAY_US_TIM->CNT = 0;
-  while (((c = DELAY_US_TIM->CNT) < 100)
+  while (((c = DELAY_US_TIM->CNT) < 20)
       && (DHT22_GPIO_PORT->IDR & DHT22_GPIO_PIN))
     ;
 
